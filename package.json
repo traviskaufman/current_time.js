@@ -1,0 +1,13 @@
+{
+  "name": "current_time.js",
+  "version": "0.0.1",
+  "description": "A javascript module for working with the current system time. Useful for clocks, countdown timers, etc.",
+  "keywords": [],
+  "author": "Travis Kaufman <travis.kaufman@gmail.com>",
+  "dependencies": {},
+  "devDependencies": {
+    "mocha": "*",
+    "should": "*"
+  },
+  "main": "index"
+}
