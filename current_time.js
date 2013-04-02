@@ -1,7 +1,8 @@
 /**
  * CurrentTime.js - A javascript module that will take care of all of your
  * current time needs.
- * @todo rename to CurrentTime.js
+ * @todo onUpdate() method
+ * @todo convert hours/minutes/seconds to 12 hour format
  */
 (function() {
   'use strict';
@@ -9,7 +10,7 @@
   var _bind = function(fn, ctx) {
     return function() {
       return fn.apply(ctx, Array.prototype.slice.call(arguments));
-    }
+    };
   };
 
   var CurrentTime = {
@@ -87,7 +88,7 @@
         tens: this._tens(time),
         ones: this._ones(time),
         raw: time
-      }
+      };
     },
 
     _tens: function(num) {
@@ -112,7 +113,7 @@
 
       g: function() {
         return this._toZeroPaddedString(
-          this_.toTwelveHrFormat(this._currentTime.hours.raw)
+          this._toTwelveHrFormat(this._currentTime.hours.raw)
         );
       },
 
