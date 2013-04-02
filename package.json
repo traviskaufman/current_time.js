@@ -9,6 +9,9 @@
     "timer",
     "date"
   ],
+  "scripts": {
+    "test": "grunt"
+  },
   "author": "Travis Kaufman <travis.kaufman@gmail.com>",
   "devDependencies": {
     "mocha": "*",

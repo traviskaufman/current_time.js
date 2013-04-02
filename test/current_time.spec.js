@@ -1,8 +1,6 @@
 /**
  * Unit tests for CurrentTime module.
  */
-var should = require('should');
-var sinon = require('sinon');
 
 describe('CurrentTime.js', function() {
   describe('Basic Funtionality', function() {
