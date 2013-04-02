@@ -13,7 +13,11 @@
   "devDependencies": {
     "mocha": "*",
     "should": "*",
-    "sinon": "~1.6.0"
+    "sinon": "~1.6.0",
+    "jshint": "~1.1.0",
+    "grunt": "~0.4.1",
+    "grunt-contrib-jshint": "~0.3.0",
+    "shelljs": "~0.1.2"
   },
   "main": "index"
 }
