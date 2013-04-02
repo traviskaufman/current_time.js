@@ -18,9 +18,6 @@ describe('CurrentTime.js', function() {
 
       before(function() {
         CurrentTime.update(dateObj);
-      });
-
-      beforeEach(function() {
         curTime = CurrentTime.get();
       });
 
