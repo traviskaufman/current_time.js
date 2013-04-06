@@ -3,6 +3,7 @@
  * current time needs.
  * @todo onUpdate() method
  * @todo convert hours/minutes/seconds to 12 hour format
+ * @todo DOCUMENT!!
  */
 (function() {
   'use strict';
@@ -13,23 +14,52 @@
     };
   };
 
-  var CurrentTime = {
+  var noop = function() {};
 
-    // We only want this to be called once.
+  var CurrentTime = {
+    /**
+     * Initialization function. <strong>Should be called before using this
+     * module.</strong> Also note that this function can only be called
+     * once.
+     *
+     * @param {Object} opts Options to pass to the module.
+     *    Current options are as follows:
+     *    <ul>
+     *      <li><strong>onUpdate</strong></li>: Callback that's invoked every
+     *      time the current time is updated. It's receiver will always be
+     *      the CurrentTime module, and the callback is passed 2 arguments:
+     *      the current time object, and the raw date object that was used to
+     *      update the current time. Note that this callback can be changed
+     *      at any time by setting <code>CurrentTime.onUpdate</code>.
+     *    </ul>
+     */
     init: (function() {
       var called = false;
-      return function() {
+      return function(opts) {
         if (called) {
           return;
         }
-
         called = true;
+
+        if (typeof opts.onUpdate === "function") {
+          this.onUpdate = opts.onUpdate;
+        }
+
         this.scheduleUpdates();
       };
     })(),
 
+    /**
+     * Callback to be invoked whenever the current time is updated.
+     *
+     * You can set this before calling init if you'd like, or just pass it in
+     * as an option to init, or set it after calling init. It's flexible :)
+     */
+    onUpdate: noop,
+
     update: function(date) {
       this._currentTime = this._parseDate(date);
+      this.onUpdate.call(this, this.get(), date);
     },
 
     scheduleUpdates: function() {
@@ -154,11 +184,13 @@
   );
 
   for (var sym in CurrentTime.timeSymbolFns) {
-    var bound = _bind(CurrentTime.timeSymbolFns[sym], CurrentTime);
-    CurrentTime.timeSymbolFns[sym] = bound;
-  }
+    var bound;
 
-  CurrentTime.init();
+    if (CurrentTime.timeSymbolFns.hasOwnProperty(sym)) {
+      bound = _bind(CurrentTime.timeSymbolFns[sym], CurrentTime);
+      CurrentTime.timeSymbolFns[sym] = bound;
+    }
+  }
 
   // It's export tiem, kids
   if (typeof window === "object") {
