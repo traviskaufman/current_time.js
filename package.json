@@ -16,7 +16,7 @@
   "devDependencies": {
     "mocha": "*",
     "should": "*",
-    "sinon": "~1.6.0",
+    "sinon": "~1.7.2",
     "jshint": "~1.1.0",
     "grunt": "~0.4.1",
     "grunt-contrib-jshint": "~0.3.0",
