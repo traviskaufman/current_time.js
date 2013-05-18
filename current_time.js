@@ -18,6 +18,8 @@
 
   var _noop = function() {};
 
+  var _onUpdate = _noop;
+
   var _getMeridian = function(rawHours) {
     return (rawHours < 12) ? "am" : "pm";
   };
@@ -61,7 +63,15 @@
 
   var _currentTime = {}; // Filled on init().
 
-  var _timeStringRegex = /%(h|H|g|G|m|s|a|A){1}/g;
+  var _timeStringSymbols = ['h', 'H', 'g', 'G', 'm', 's', 'a', 'A'];
+
+  var _buildTimeRegex = function() {
+    return new RegExp(
+      '%(' + _timeStringSymbols.join('|') + '){1}', 'g'
+    );
+  };
+
+  var _timeStringRegex = _buildTimeRegex();
 
   var CurrentTime = {
     /**
@@ -89,7 +99,7 @@
         called = true;
 
         if (typeof opts.onUpdate === "function") {
-          this.onUpdate = opts.onUpdate;
+          this.onUpdate(opts.onUpdate);
         }
 
         this.scheduleUpdates();
@@ -102,11 +112,17 @@
      * You can set this before calling init if you'd like, or just pass it in
      * as an option to init, or set it after calling init. It's flexible :)
      */
-    onUpdate: _noop,
+    onUpdate: function(updateFn) {
+      if (typeof updateFn !== "function") {
+        return;
+      }
+
+      _onUpdate = _bind(updateFn, this);
+    },
 
     update: function(date) {
       _currentTime = _parseDate(date);
-      this.onUpdate.call(this, this.get(), date);
+      _onUpdate(this.get(), date);
     },
 
     scheduleUpdates: function() {
@@ -127,8 +143,12 @@
         str = "%h:%m:%s %a";
       }
 
-      return str.replace(_timeStringRegex, function(_, sym) {
-        return _this.timeSymbolFns[sym].call(_this, _this.get());
+      return str.replace(_timeStringRegex, function(match, sym) {
+        if (_hasProp.call(_this.timeSymbolFns, sym) === true) {
+          return _this.timeSymbolFns[sym].call(_this, _this.get());
+        } else {
+          return match;
+        }
       });
     },
 
@@ -183,14 +203,23 @@
       }
     },
 
-    addSymbol: function(sym, symFn) {
+    addSymbol: function(sym, symFn, rebuild /* = true */) {
       var addedSym = null;
+      rebuild = (typeof rebuild === "boolean") ? rebuild : true;
 
       if (typeof sym === "string" &&
           sym.length === 1 &&
           typeof symFn === "function") {
 
         this.timeSymbolFns[sym] = _bind(symFn, CurrentTime);
+        // Don't add a symbol if we're simply changing the default symbol.
+        if (_timeStringSymbols.indexOf(sym) === -1) {
+          _timeStringSymbols.push(sym);
+
+          if (rebuild === true) {
+            _timeStringRegex = _buildTimeRegex();
+          }
+        }
         addedSym = sym;
       }
 
@@ -202,18 +231,17 @@
 
       for (var sym in symbolsObj) {
         if (_hasProp.call(symbolsObj, sym) === true) {
-          if (this.addSymbol(sym, symbolsObj[sym]) !== null) {
+          if (this.addSymbol(sym, symbolsObj[sym], false) !== null) {
             addedSyms.push(sym);
           }
         }
       }
 
+      _timeStringRegex = _buildTimeRegex();
+
       return addedSyms;
     }
   };
-
-
-  // Start the clock
 
   // Make sure scheduleUpdates always has the right receiver.
   CurrentTime.scheduleUpdates = _bind(
@@ -230,14 +258,20 @@
 
   // It's export tiem, kids
   if (typeof window === "object") {
-    window.CurrentTime = window.CurrentTime || CurrentTime;
+    var _old = window.CurrentTime;
+    window.CurrentTime = CurrentTime;
+
+    // We only define this when dealing with the Window object. There's no need
+    // to do this for AMD.
+    CurrentTime.noConflict = function() {
+      window.CurrentTime = _old;
+      return CurrentTime;
+    };
   }
 
   if (typeof module === "object" && typeof module.exports === "object") {
     module.exports = CurrentTime;
   }
-
-  // TODO: Add some nice jQuery plugin functionality.
 
   // Check for AMD
   if (typeof define === "function" && typeof require === "function") {
