@@ -3,7 +3,7 @@
  */
 
 describe('CurrentTime.js', function() {
-  describe('Basic Funtionality', function() {
+  describe('Core Funtionality', function() {
     var CurrentTime = require('../current_time');
     var dateObj = new Date("Mon, 1 Apr 2013 13:21:46");
 
@@ -56,7 +56,7 @@ describe('CurrentTime.js', function() {
       it("won't bail if clients pass in an invalid time string", function() {
         var str = CurrentTime.mkString("%G %y");
         str.should.equal("13 %y");
-      })
+      });
 
     });
 
