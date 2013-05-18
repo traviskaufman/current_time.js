@@ -1,12 +1,14 @@
 /**
  * CurrentTime.js - A javascript module that will take care of all of your
  * current time needs.
- * @todo onUpdate() method
  * @todo convert hours/minutes/seconds to 12 hour format
+ * @todo jQuery Plugin
  * @todo DOCUMENT!!
  */
 (function() {
   'use strict';
+
+  var _hasProp = Object.prototype.hasOwnProperty;
 
   var _bind = function(fn, ctx) {
     return function() {
@@ -14,7 +16,52 @@
     };
   };
 
-  var noop = function() {};
+  var _noop = function() {};
+
+  var _getMeridian = function(rawHours) {
+    return (rawHours < 12) ? "am" : "pm";
+  };
+
+  var _parseDate = function(date) {
+    var hours = date.getHours();
+    var minutes = date.getMinutes();
+    var seconds = date.getSeconds();
+
+    return {
+      hours: _splitTime(hours),
+      minutes: _splitTime(minutes),
+      seconds: _splitTime(seconds),
+      meridian: _getMeridian(hours)
+    };
+  };
+
+  var _splitTime = function(time) {
+    return {
+      tens: _tens(time),
+      ones: _ones(time),
+      raw: time
+    };
+  };
+
+  var _tens = function(num) {
+    return parseInt(num * 0.1, 10);
+  };
+
+  var _ones = function(num) {
+    return num % 10;
+  };
+
+  var _toZeroPaddedString = function(num) {
+    return (num < 10) ? "0" + num : num.toString();
+  };
+
+  var _toTwelveHrFormat = function(hrs) {
+    return ((hrs % 12) === 0) ? 12 : (hrs % 12);
+  };
+
+  var _currentTime = {}; // Filled on init().
+
+  var _timeStringRegex = /%(h|H|g|G|m|s|a|A){1}/g;
 
   var CurrentTime = {
     /**
@@ -55,10 +102,10 @@
      * You can set this before calling init if you'd like, or just pass it in
      * as an option to init, or set it after calling init. It's flexible :)
      */
-    onUpdate: noop,
+    onUpdate: _noop,
 
     update: function(date) {
-      this._currentTime = this._parseDate(date);
+      _currentTime = _parseDate(date);
       this.onUpdate.call(this, this.get(), date);
     },
 
@@ -70,7 +117,7 @@
     },
 
     get: function() {
-      return this._currentTime;
+      return _currentTime;
     },
 
     mkString: function(str) {
@@ -80,32 +127,17 @@
         str = "%h:%m:%s %a";
       }
 
-      return str.replace(_this._timeStringRegex, function(_, sym) {
-        return _this.timeSymbolFns[sym]();
+      return str.replace(_timeStringRegex, function(_, sym) {
+        return _this.timeSymbolFns[sym].call(_this, _this.get());
       });
     },
 
     getMeridian: function() {
-      return (this._currentTime.hours.raw < 12) ? "am" : "pm";
+      return _getMeridian(_currentTime.hours.raw);
     },
 
     toString: function() {
       return this.mkString();
-    },
-
-    // Filled on init.
-    _currentTime: {},
-
-    _parseDate: function(date) {
-      var hours = date.getHours();
-      var minutes = date.getMinutes();
-      var seconds = date.getSeconds();
-
-      return {
-        hours: this._splitTime(hours),
-        minutes: this._splitTime(minutes),
-        seconds: this._splitTime(seconds)
-      };
     },
 
     // The following 3 methods assume that 0 ≤ <code>num</code> ≤ 99.
@@ -113,52 +145,35 @@
     // we never have more than double-digits, it's a meaningless sacrifice
     // of efficiency.
 
-    _splitTime: function(time) {
-      return {
-        tens: this._tens(time),
-        ones: this._ones(time),
-        raw: time
-      };
-    },
-
-    _tens: function(num) {
-      return parseInt(num * 0.1, 10);
-    },
-
-    _ones: function(num) {
-      return num % 10;
-    },
-
-    _timeStringRegex: /%(h|H|g|G|m|s|a|A){1}/g,
-
     // Adapted from PHP's date formatting.
     timeSymbolFns: {
-      h: function () {
-        return this._toTwelveHrFormat(this._currentTime.hours.raw).toString();
+      h: function(time) {
+        return _toTwelveHrFormat(time.hours.raw).toString();
       },
 
-      H: function() {
-        return this._currentTime.hours.raw.toString();
+      H: function(time) {
+        return time.hours.raw.toString();
       },
 
-      g: function() {
-        return this._toZeroPaddedString(
-          this._toTwelveHrFormat(this._currentTime.hours.raw)
+      g: function(time) {
+        return _toZeroPaddedString(
+          _toTwelveHrFormat(time.hours.raw)
         );
       },
 
-      G: function() {
-        return this._toZeroPaddedString(this._currentTime.hours.raw);
+      G: function(time) {
+        return _toZeroPaddedString(time.hours.raw);
       },
 
-      m: function() {
-        return this._toZeroPaddedString(this._currentTime.minutes.raw);
+      m: function(time) {
+        return _toZeroPaddedString(time.minutes.raw);
       },
 
-      s: function() {
-        return this._toZeroPaddedString(this._currentTime.seconds.raw);
+      s: function(time) {
+        return _toZeroPaddedString(time.seconds.raw);
       },
 
+      // We don't pass register a time argument here because we don't need to.
       a: function() {
         return this.getMeridian();
       },
@@ -168,27 +183,48 @@
       }
     },
 
-    _toZeroPaddedString: function(num) {
-      return (num < 10) ? "0" + num : num.toString();
+    addSymbol: function(sym, symFn) {
+      var addedSym = null;
+
+      if (typeof sym === "string" &&
+          sym.length === 1 &&
+          typeof symFn === "function") {
+
+        this.timeSymbolFns[sym] = _bind(symFn, CurrentTime);
+        addedSym = sym;
+      }
+
+      return addedSym;
     },
 
-    _toTwelveHrFormat: function(time) {
-      return ((time % 12) === 0) ? 12 : (time % 12);
+    addSymbols: function(symbolsObj) {
+      var addedSyms = [];
+
+      for (var sym in symbolsObj) {
+        if (_hasProp.call(symbolsObj, sym) === true) {
+          if (this.addSymbol(sym, symbolsObj[sym]) !== null) {
+            addedSyms.push(sym);
+          }
+        }
+      }
+
+      return addedSyms;
     }
   };
 
 
   // Start the clock
+
+  // Make sure scheduleUpdates always has the right receiver.
   CurrentTime.scheduleUpdates = _bind(
     CurrentTime.scheduleUpdates, CurrentTime
   );
 
   for (var sym in CurrentTime.timeSymbolFns) {
-    var bound;
-
-    if (CurrentTime.timeSymbolFns.hasOwnProperty(sym)) {
-      bound = _bind(CurrentTime.timeSymbolFns[sym], CurrentTime);
-      CurrentTime.timeSymbolFns[sym] = bound;
+    if (_hasProp.call(CurrentTime.timeSymbolFns, sym) === true) {
+      CurrentTime.timeSymbolFns[sym] = _bind(
+        CurrentTime.timeSymbolFns[sym], CurrentTime
+      );
     }
   }
 
