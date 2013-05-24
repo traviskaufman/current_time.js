@@ -1,9 +1,13 @@
 /**
  * Unit tests for CurrentTime module.
  */
+
+/*jshint node:true */
 var sinon = require('sinon');
 
+/*global describe:true, beforeEach:true, it:true, before:true */
 describe('CurrentTime.js', function() {
+  'use strict';
   describe('Core Funtionality', function() {
     var CurrentTime = require('../current_time');
     var dateObj = new Date("Mon, 1 Apr 2013 13:21:46");

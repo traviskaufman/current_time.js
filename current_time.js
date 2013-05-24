@@ -5,6 +5,9 @@
  * @todo Finish Writing Tests.
  * @todo DOCUMENT!!
  */
+
+ /*jshint browser:true, node:true */
+ /*global define:true */
 (function() {
   'use strict';
 

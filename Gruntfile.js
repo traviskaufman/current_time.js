@@ -1,3 +1,5 @@
+/*jshint node:true */
+/*global exec */
 require('shelljs/global');
 
 /**
@@ -5,13 +7,13 @@ require('shelljs/global');
  * @param {Object} grunt Grunt Object.
  */
 module.exports = function(grunt) {
-
+  'use strict';
   grunt.initConfig({
     pkg: grunt.file.readJSON('package.json'),
 
     jshint: {
       all: ['*.js', './test/*.js', 'Gruntfile.js'],
-      jshintrc: grunt.file.read(__dirname + '/jshintrc')
+      options: JSON.parse(grunt.file.read(__dirname + '/jshintrc'))
     }
   });
 
