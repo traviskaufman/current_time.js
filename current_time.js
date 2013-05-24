@@ -1,8 +1,9 @@
 /**
  * CurrentTime.js - A javascript module that will take care of all of your
  * current time needs.
- * @todo convert hours/minutes/seconds to 12 hour format
- * @todo jQuery Plugin
+ *
+ * @todo method on time object to convert hours/minutes/seconds to 12 hour
+ *       format
  * @todo DOCUMENT!!
  */
 (function() {
@@ -45,6 +46,12 @@
     };
   };
 
+
+  // The following 3 methods assume that 0 ≤ <code>num</code> ≤ 99.
+  // They could be scaled with modulo but since this is a clock, where
+  // we never have more than double-digits, it's a meaningless sacrifice
+  // of efficiency.
+
   var _tens = function(num) {
     return parseInt(num * 0.1, 10);
   };
@@ -63,7 +70,7 @@
 
   var _currentTime = {}; // Filled on init().
 
-  var _timeStringSymbols = ['h', 'H', 'g', 'G', 'm', 's', 'a', 'A'];
+  var _timeStringSymbols = [];
 
   var _buildTimeRegex = function() {
     return new RegExp(
@@ -71,7 +78,7 @@
     );
   };
 
-  var _timeStringRegex = _buildTimeRegex();
+  var _timeStringRegex = null;
 
   var CurrentTime = {
     /**
@@ -160,50 +167,10 @@
       return this.mkString();
     },
 
-    // The following 3 methods assume that 0 ≤ <code>num</code> ≤ 99.
-    // They could be scaled with modulo but since this is a clock, where
-    // we never have more than double-digits, it's a meaningless sacrifice
-    // of efficiency.
 
-    // Adapted from PHP's date formatting.
-    timeSymbolFns: {
-      h: function(time) {
-        return _toTwelveHrFormat(time.hours.raw).toString();
-      },
+    timeSymbolFns: {},
 
-      H: function(time) {
-        return time.hours.raw.toString();
-      },
-
-      g: function(time) {
-        return _toZeroPaddedString(
-          _toTwelveHrFormat(time.hours.raw)
-        );
-      },
-
-      G: function(time) {
-        return _toZeroPaddedString(time.hours.raw);
-      },
-
-      m: function(time) {
-        return _toZeroPaddedString(time.minutes.raw);
-      },
-
-      s: function(time) {
-        return _toZeroPaddedString(time.seconds.raw);
-      },
-
-      // We don't pass register a time argument here because we don't need to.
-      a: function() {
-        return this.getMeridian();
-      },
-
-      A: function() {
-        return this.getMeridian().toUpperCase();
-      }
-    },
-
-    addSymbol: function(sym, symFn, rebuild /* = true */) {
+    addSymbol: function(sym, symFn, rebuild) {
       var addedSym = null;
       rebuild = (typeof rebuild === "boolean") ? rebuild : true;
 
@@ -212,7 +179,9 @@
           typeof symFn === "function") {
 
         this.timeSymbolFns[sym] = _bind(symFn, CurrentTime);
-        // Don't add a symbol if we're simply changing the default symbol.
+
+        // Don't add a symbol if we're simply changing an already-defined
+        // symbol.
         if (_timeStringSymbols.indexOf(sym) === -1) {
           _timeStringSymbols.push(sym);
 
@@ -248,13 +217,44 @@
     CurrentTime.scheduleUpdates, CurrentTime
   );
 
-  for (var sym in CurrentTime.timeSymbolFns) {
-    if (_hasProp.call(CurrentTime.timeSymbolFns, sym) === true) {
-      CurrentTime.timeSymbolFns[sym] = _bind(
-        CurrentTime.timeSymbolFns[sym], CurrentTime
+  // Register all of the default time symbols.
+  CurrentTime.addSymbols({
+    // Adapted from PHP's date formatting symbols. Yes, PHP, I know, you hate
+    // me, I hate me, etc.
+    h: function(time) {
+      return _toTwelveHrFormat(time.hours.raw).toString();
+    },
+
+    H: function(time) {
+      return time.hours.raw.toString();
+    },
+
+    g: function(time) {
+      return _toZeroPaddedString(
+        _toTwelveHrFormat(time.hours.raw)
       );
+    },
+
+    G: function(time) {
+      return _toZeroPaddedString(time.hours.raw);
+    },
+
+    m: function(time) {
+      return _toZeroPaddedString(time.minutes.raw);
+    },
+
+    s: function(time) {
+      return _toZeroPaddedString(time.seconds.raw);
+    },
+
+    a: function() {
+      return this.getMeridian();
+    },
+
+    A: function() {
+      return this.getMeridian().toUpperCase();
     }
-  }
+  });
 
   // It's export tiem, kids
   if (typeof window === "object") {
