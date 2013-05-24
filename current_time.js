@@ -2,8 +2,7 @@
  * CurrentTime.js - A javascript module that will take care of all of your
  * current time needs.
  *
- * @todo method on time object to convert hours/minutes/seconds to 12 hour
- *       format
+ * @todo Finish Writing Tests.
  * @todo DOCUMENT!!
  */
 (function() {
@@ -34,7 +33,15 @@
       hours: _splitTime(hours),
       minutes: _splitTime(minutes),
       seconds: _splitTime(seconds),
-      meridian: _getMeridian(hours)
+      meridian: _getMeridian(hours),
+      toTwelveHrFormat: function() {
+        return {
+          hours: _splitTime(_toTwelveHrFormat(this.hours.raw)),
+          minutes: this.minutes,
+          seconds: this.seconds,
+          meridian: this.meridian
+        };
+      }
     };
   };
 
@@ -105,6 +112,7 @@
         }
         called = true;
 
+        opts = (typeof opts === "object") ? opts : {};
         if (typeof opts.onUpdate === "function") {
           this.onUpdate(opts.onUpdate);
         }

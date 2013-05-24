@@ -35,11 +35,19 @@ describe('CurrentTime.js', function() {
       it('parses seconds', function() {
         assertValidTimeComponent(curTime.seconds, 46);
       });
+
+      it('parses the meridian', function() {
+        curTime.meridian.should.equal("pm");
+      });
+
+      it('can convert the time to a twelve hour format', function() {
+        assertValidTimeComponent(curTime.toTwelveHrFormat().hours, 1);
+      });
     });
 
     describe('Printing/Output Formatting', function() {
 
-      it('determines the proper meridian', function() {
+      it('provides a convenience method for getting the meridian', function() {
         CurrentTime.getMeridian().should.equal("pm");
       });
 
