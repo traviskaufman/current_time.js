@@ -21,7 +21,7 @@
     "grunt": "~0.4.1",
     "grunt-contrib-jshint": "~0.3.0",
     "shelljs": "~0.1.2",
-    "timecop": "0.0.1"
+    "timekeeper": "0.0.3"
   },
   "main": "index"
 }
