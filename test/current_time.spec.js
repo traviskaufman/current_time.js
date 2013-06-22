@@ -4,13 +4,13 @@
 
 /*jshint node:true */
 var sinon = require('sinon');
+var CurrentTime = require('../current_time');
 
 /*global describe:true, beforeEach:true, it:true, before:true */
 describe('CurrentTime.js', function() {
   'use strict';
   describe('Core Funtionality', function() {
-    var CurrentTime = require('../current_time');
-    var dateObj = new Date("Mon, 1 Apr 2013 13:21:46");
+    var dateObj = new Date('Mon, 1 Apr 2013 13:21:46');
     var _update = function() { CurrentTime.update(dateObj); };
 
     var assertValidTimeComponent = function(timeComponent, expected) {
@@ -41,7 +41,23 @@ describe('CurrentTime.js', function() {
       });
 
       it('parses the meridian', function() {
-        curTime.meridian.should.equal("pm");
+        curTime.meridian.should.equal('pm');
+      });
+
+      it('provides a convenience method for getting hours', function() {
+        assertValidTimeComponent(CurrentTime.hours(), 13);
+      });
+
+      it('provides a convenience method for getting minutes', function() {
+        assertValidTimeComponent(CurrentTime.minutes(), 21);
+      });
+
+      it('provides a convenience method for getting seconds', function() {
+        assertValidTimeComponent(CurrentTime.seconds(), 46);
+      });
+
+      it('provides a convenience method for getting the meridian', function() {
+        CurrentTime.meridian().should.equal('pm');
       });
 
       it('can convert the time to a twelve hour format', function() {
@@ -50,26 +66,20 @@ describe('CurrentTime.js', function() {
     });
 
     describe('Printing/Output Formatting', function() {
-
-      it('provides a convenience method for getting the meridian', function() {
-        CurrentTime.getMeridian().should.equal("pm");
-      });
-
       it('pretty-prints when toString() is called on it', function() {
-        CurrentTime.toString().should.equal("1:21:46 pm");
+        CurrentTime.toString().should.equal('1:21:46 pm');
       });
 
       it('allows clients to create time strings of their own', function() {
-        var str = CurrentTime.mkString("hi %G %g %H %h %m %s %a %A");
-        var expected = "hi 13 01 13 1 21 46 pm PM";
+        var str = CurrentTime.mkString('hi %G %g %H %h %m %s %a %A');
+        var expected = 'hi 13 01 13 1 21 46 pm PM';
         str.should.equal(expected);
       });
 
       it("won't bail if clients pass in an invalid time string", function() {
-        var str = CurrentTime.mkString("%G %y");
-        str.should.equal("13 %y");
+        var str = CurrentTime.mkString('%G %y');
+        str.should.equal('13 %y');
       });
-
     });
 
     describe('Extensibility', function() {
@@ -92,7 +102,7 @@ describe('CurrentTime.js', function() {
           assertValidTimeComponent(timeArg.hours, 13);
           assertValidTimeComponent(timeArg.minutes, 21);
           assertValidTimeComponent(timeArg.seconds, 46);
-          timeArg.meridian.should.equal("pm");
+          timeArg.meridian.should.equal('pm');
         });
 
         it('passes the raw date object as the 2nd callback arg', function() {
@@ -105,7 +115,19 @@ describe('CurrentTime.js', function() {
       });
 
       describe('Client-defined time symbols', function() {
-        // TODO: addSymbol(s)
+        it('allows clients to add their own interpolated time symbols',
+           function() {
+
+          CurrentTime.addSymbol('x', function(t) {
+            return t.meridian + t.meridian;
+          });
+
+          CurrentTime.mkString('time %x').should.equal('time pmpm');
+        });
+
+        it('allows clients to batch add time symbols', function() {
+          // TODO
+        });
       });
     });
 

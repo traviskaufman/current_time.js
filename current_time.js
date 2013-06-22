@@ -10,6 +10,7 @@
  /*global define:true */
 (function() {
   'use strict';
+  var _global = this || {};
 
   var _hasProp = Object.prototype.hasOwnProperty;
 
@@ -24,8 +25,10 @@
   var _onUpdate = _noop;
 
   var _getMeridian = function(rawHours) {
-    return (rawHours < 12) ? "am" : "pm";
+    return (rawHours < 12) ? 'am' : 'pm';
   };
+
+  var _oldCurrentTime = _global.CurrentTime;
 
   var _parseDate = function(date) {
     var hours = date.getHours();
@@ -71,7 +74,7 @@
   };
 
   var _toZeroPaddedString = function(num) {
-    return (num < 10) ? "0" + num : num.toString();
+    return (num < 10) ? '0' + num : num.toString();
   };
 
   var _toTwelveHrFormat = function(hrs) {
@@ -86,6 +89,15 @@
     return new RegExp(
       '%(' + _timeStringSymbols.join('|') + '){1}', 'g'
     );
+  };
+
+  var _scheduleUpdates = function(__ct) {
+    var date = new Date();
+    __ct.update(date);
+    // Dat accuracy
+    setTimeout(function() {
+      _scheduleUpdates(__ct);
+    }, 1000 - date.getMilliseconds());
   };
 
   var _timeStringRegex = null;
@@ -115,12 +127,12 @@
         }
         called = true;
 
-        opts = (typeof opts === "object") ? opts : {};
-        if (typeof opts.onUpdate === "function") {
+        opts = (typeof opts === 'object') ? opts : {};
+        if (typeof opts.onUpdate === 'function') {
           this.onUpdate(opts.onUpdate);
         }
 
-        this.scheduleUpdates();
+        _scheduleUpdates(this);
       };
     })(),
 
@@ -131,7 +143,7 @@
      * as an option to init, or set it after calling init. It's flexible :)
      */
     onUpdate: function(updateFn) {
-      if (typeof updateFn !== "function") {
+      if (typeof updateFn !== 'function') {
         return;
       }
 
@@ -143,13 +155,6 @@
       _onUpdate(this.get(), date);
     },
 
-    scheduleUpdates: function() {
-      var date = new Date();
-      this.update(date);
-      // Dat accuracy
-      setTimeout(this.scheduleUpdates, 1000 - date.getMilliseconds());
-    },
-
     get: function() {
       return _currentTime;
     },
@@ -157,8 +162,8 @@
     mkString: function(str) {
       var _this = this;
 
-      if (typeof str !== "string") {
-        str = "%h:%m:%s %a";
+      if (typeof str !== 'string') {
+        str = '%h:%m:%s %a';
       }
 
       return str.replace(_timeStringRegex, function(match, sym) {
@@ -170,7 +175,19 @@
       });
     },
 
-    getMeridian: function() {
+    hours: function() {
+      return this.get().hours;
+    },
+
+    minutes: function() {
+      return this.get().minutes;
+    },
+
+    seconds: function() {
+      return this.get().seconds;
+    },
+
+    meridian: function() {
       return _getMeridian(_currentTime.hours.raw);
     },
 
@@ -178,16 +195,15 @@
       return this.mkString();
     },
 
-
     timeSymbolFns: {},
 
     addSymbol: function(sym, symFn, rebuild) {
       var addedSym = null;
-      rebuild = (typeof rebuild === "boolean") ? rebuild : true;
+      rebuild = (typeof rebuild === 'boolean') ? rebuild : true;
 
-      if (typeof sym === "string" &&
+      if (typeof sym === 'string' &&
           sym.length === 1 &&
-          typeof symFn === "function") {
+          typeof symFn === 'function') {
 
         this.timeSymbolFns[sym] = _bind(symFn, CurrentTime);
 
@@ -220,6 +236,11 @@
       _timeStringRegex = _buildTimeRegex();
 
       return addedSyms;
+    },
+
+    noConflict: function() {
+      _global.CurrentTime = _oldCurrentTime;
+      return CurrentTime;
     }
   };
 
@@ -259,34 +280,27 @@
     },
 
     a: function() {
-      return this.getMeridian();
+      return this.meridian();
     },
 
     A: function() {
-      return this.getMeridian().toUpperCase();
+      return this.meridian().toUpperCase();
     }
   });
 
-  // It's export tiem, kids
-  if (typeof window === "object") {
-    var _old = window.CurrentTime;
+  // Browser
+  if (typeof window === 'object') {
     window.CurrentTime = CurrentTime;
-
-    // We only define this when dealing with the Window object. There's no need
-    // to do this for AMD.
-    CurrentTime.noConflict = function() {
-      window.CurrentTime = _old;
-      return CurrentTime;
-    };
   }
 
-  if (typeof module === "object" && typeof module.exports === "object") {
+  // NodeJS
+  if (typeof module === 'object' && typeof module.exports === 'object') {
     module.exports = CurrentTime;
   }
 
-  // Check for AMD
-  if (typeof define === "function" && typeof require === "function") {
-    define("CurrentTime", [], function() { return CurrentTime; });
+  // AMD/RequireJS
+  if (typeof define === 'function' && typeof require === 'function') {
+    define('CurrentTime', [], function() { return CurrentTime; });
   }
 
 })();
