@@ -2,7 +2,6 @@
  * CurrentTime.js - A javascript module that will take care of all of your
  * current time needs.
  *
- * @todo Finish Writing Tests.
  * @todo DOCUMENT!!
  */
 
@@ -102,6 +101,8 @@
 
   var _timeStringRegex = null;
 
+  var _isInitialized = false;
+
   var CurrentTime = {
     /**
      * Initialization function. <strong>Should be called before using this
@@ -119,22 +120,19 @@
      *      at any time by setting <code>CurrentTime.onUpdate</code>.
      *    </ul>
      */
-    init: (function() {
-      var called = false;
-      return function(opts) {
-        if (called) {
-          return;
-        }
-        called = true;
+    init: function(opts) {
+      if (_isInitialized) {
+        return;
+      }
+      _isInitialized = true;
 
-        opts = (typeof opts === 'object') ? opts : {};
-        if (typeof opts.onUpdate === 'function') {
-          this.onUpdate(opts.onUpdate);
-        }
+      opts = (typeof opts === 'object') ? opts : {};
+      if (typeof opts.onUpdate === 'function') {
+        this.onUpdate(opts.onUpdate);
+      }
 
-        _scheduleUpdates(this);
-      };
-    })(),
+      _scheduleUpdates(this);
+    },
 
     /**
      * Callback to be invoked whenever the current time is updated.

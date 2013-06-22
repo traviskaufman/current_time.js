@@ -4,15 +4,24 @@
 
 /*jshint node:true */
 var sinon = require('sinon');
-var CurrentTime = require('../current_time');
+var tk = require('timekeeper');
 
-/*global describe:true, beforeEach:true, it:true, before:true */
+/*global describe:true, beforeEach:true, it:true, afterEach:true */
 describe('CurrentTime.js', function() {
   'use strict';
-  describe('Core Funtionality', function() {
-    var dateObj = new Date('Mon, 1 Apr 2013 13:21:46');
-    var _update = function() { CurrentTime.update(dateObj); };
+  var CurrentTime;
+  var fakeDate = new Date('Mon, 1 Apr 2013 13:21:46');
 
+  beforeEach(function() {
+    CurrentTime = require('../current_time');
+    tk.travel(fakeDate);
+  });
+
+  afterEach(function() {
+    tk.reset();
+  });
+
+  describe('Core Funtionality', function() {
     var assertValidTimeComponent = function(timeComponent, expected) {
       timeComponent.raw.should.equal(expected);
 
@@ -20,11 +29,13 @@ describe('CurrentTime.js', function() {
         .should.equal(expected);
     };
 
-    before(_update);
+    var _update = function() { CurrentTime.update(fakeDate); };
+
+    beforeEach(_update);
 
     describe('Date parsing', function() {
       var curTime;
-      before(function() {
+      beforeEach(function() {
         curTime = CurrentTime.get();
       });
 
@@ -106,7 +117,7 @@ describe('CurrentTime.js', function() {
         });
 
         it('passes the raw date object as the 2nd callback arg', function() {
-          _updateFn.getCall(0).args[1].should.eql(dateObj);
+          _updateFn.getCall(0).args[1].should.eql(fakeDate);
         });
 
         it('ensures CurrentTime is always the receiver', function() {
@@ -126,10 +137,48 @@ describe('CurrentTime.js', function() {
         });
 
         it('allows clients to batch add time symbols', function() {
-          // TODO
+          CurrentTime.addSymbols({
+            y: function(t) {
+              return t.hours.raw * 2;
+            },
+
+            z: function() {
+              return this.minutes().raw * 2;
+            }
+          });
+
+          CurrentTime.mkString('%y').should.equal('26');
+          CurrentTime.mkString('%z').should.equal('42');
         });
       });
-    });
+    }); // Extensibility
+  }); // Core Functionality
 
+  describe('Reactiveness', function() {
+    var assertTimeOneSecLater = function(time) {
+      time.hours.raw.should.equal(13);
+      time.minutes.raw.should.equal(21);
+      time.seconds.raw.should.equal(47);
+    };
+
+    it('takes an init updateFn that gets passed updated time', function(done) {
+      var updateFn = sinon.spy();
+
+      CurrentTime.init({
+        onUpdate: updateFn
+      });
+
+      setTimeout(function() {
+        assertTimeOneSecLater(updateFn.lastCall.args[0]);
+        done();
+      }, 1001);
+    });
+  });
+
+  describe('Utilities', function() {
+    it('can return a ref to itself for noConflict purposes', function() {
+      var CT = CurrentTime.noConflict();
+      CT.should.equal(CurrentTime);
+    });
   });
 });
